@@ -14,9 +14,10 @@ const winningPossibilities = [
 ];
 
 const handleClick = (e) => {
-  if (state.status) {
-    let x = e.clientX - cvs.offsetLeft;
-    let y = e.clientY - cvs.offsetTop;
+  let x = e.clientX - cvs.offsetLeft;
+  let y = e.clientY - cvs.offsetTop;
+
+  if (state.status && !state.isTaken(x, y)) {
     if (x >= 0 && x <= cvs.width && y >= 0 && y <= cvs.height) {
       player = !player ? 1 : 0;
       state.setState(x, y, player);
@@ -94,7 +95,13 @@ const state = {
       });
     });
   },
-  setState: function (x, y, player) {
+
+  isTaken: function (x, y) {
+    let pos = this.pointerToGrid(x, y);
+    return this.values[pos.y][pos.x] !== -1;
+  },
+
+  pointerToGrid: function (x, y) {
     let pos = {};
     if (x < grid.positions[0][1].x) pos.x = 0;
     else if (x < grid.positions[0][2].x) pos.x = 1;
@@ -103,6 +110,12 @@ const state = {
     if (y < grid.positions[1][0].y) pos.y = 0;
     else if (y < grid.positions[2][0].y) pos.y = 1;
     else pos.y = 2;
+
+    return pos;
+  },
+
+  setState: function (x, y, player) {
+    let pos = this.pointerToGrid(x, y);
 
     if (this.values[pos.y][pos.x] === -1) this.values[pos.y][pos.x] = player;
     this.check(player);
@@ -136,6 +149,16 @@ const state = {
         document.getElementById("winner").innerHTML = `${
           player ? "X" : "O"
         } WON!`;
+      }
+
+      let isTie = true;
+      for (let i = 0; i < 3; i++)
+        for (let j = 0; j < 3; j++) if (this.values[i][j] === -1) isTie = false;
+
+      if (isTie) {
+        this.draw();
+        document.getElementById("winner").innerHTML = `It's a TIE!`;
+        this.status = 0;
       }
     });
   },
